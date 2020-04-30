@@ -58,12 +58,9 @@ function createGameTable(){
                         alert('게임오버!');
                     }else{//safe zone, no mine
                         openTable(rowIndex,columnIndex);
-                        openCount = tableStatusArray.filter(function(word){
-                            console.log(word);
-                            return word==='';
-                        }).length;
+
                         console.log(openCount);
-                        if (openCount === 0){
+                        if (openCount ===  gameSettings.width*gameSettings.height-gameSettings.mines){
                             gameStopFlag = true;
                             closeTimerInterval(timerInterval);
                             alert('승리!!', timeCount,'초걸림');
@@ -223,7 +220,6 @@ function openTable(height, width) {
         if (status === ' ') {
             if (tableStatusArray[height][width] === ''){
                 openCount++;
-                console.log('openTable',height,width, openCount);
                 column.textContent = '';
                 column.style.backgroundColor = '#DDDDDD';
                 tableStatusArray[height][width] = ' ';
@@ -235,7 +231,7 @@ function openTable(height, width) {
 
         } else if (status === 'X') {
             return;
-        } else {
+        } else if(column.textContent !==' '){
             column.textContent = status;
             if (tableStatusArray[height][width] === '') {
                 if (status === '1') {
@@ -257,9 +253,11 @@ function openTable(height, width) {
                     column.style.backgroundColor = '#DDDDDD';
                     column.style.color = 'red';
                 }
+                openCount++;
+                tableStatusArray[height][width] = status;
+
             }
         }
-        tableStatusArray[height][width] = status;
     }else{
         return;
 
