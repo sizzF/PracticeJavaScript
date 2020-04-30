@@ -7,10 +7,12 @@ let tableArray = [];
 let tableStatusArray = [];
 let tableTrArray = [];
 let timerInterval = null;
-let timeCount =0;
+let timeCount = 0;
+let gameStartFlag = false;
+let gameStopFlag = false;
+let openCount = 0;
 const timer = document.querySelector('#timer');
 const gameSetBtn = document.querySelector('#gameSetBtn');
-const gameStartBtn = document.querySelector('#gameStartBtn');
 
 gameSetBtn.addEventListener('click',function(){
     gameSettings.width = parseInt(document.querySelector('#widthSet').value);
@@ -22,50 +24,77 @@ gameSetBtn.addEventListener('click',function(){
     createGameTable();
 });
 
-gameStartBtn.addEventListener('click', setTimerInterval);
 
 let gameTable = document.querySelector('#gameTable tbody');
 
 function createGameTable(){
 //테이블 재설정할때 초기화하는방법 생각하기
+    let tbody = document.querySelector('tbody');
+    tableTrArray = [];
+    tbody.innerHTML='';
+    openCount = 0;
+    timeCount = 0;
     for(let i = 0; i<gameSettings.height; i++){
         let tr = document.createElement('tr');
         for (let j = 0; j<gameSettings.width; j++){
             let td = document.createElement('td');
 
             td.addEventListener('click',(event) => {
+                if (!gameStartFlag){
+                    gameStartFlag = true;
+                    timerInterval = setTimerInterval();
+                }
                 let rowIndex = tableTrArray.findIndex(row => row.contains(event.target));
                 let columns = Array.from(tableTrArray[rowIndex].querySelectorAll('td'));
                 let columnIndex = columns.findIndex(column => column == event.target);
                 console.log(rowIndex, columnIndex);
                 let status = tableArray[rowIndex][columnIndex];
                 let column = columns[columnIndex];
-                if (status==='X'){
-                    column.textContent = 'x';
-                    alert('게임오버!');
-                }else{//safe zone, no mine
-                    openTable(rowIndex,columnIndex);
+                if (gameStopFlag === false){
+                    if (status==='X'){
+                        column.textContent = 'x';
+                        closeTimerInterval(timerInterval);
+                        gameStopFlag=true;
+                        alert('게임오버!');
+                    }else{//safe zone, no mine
+                        openTable(rowIndex,columnIndex);
+                        openCount = tableStatusArray.filter(function(word){
+                            console.log(word);
+                            return word==='';
+                        }).length;
+                        console.log(openCount);
+                        if (openCount === 0){
+                            gameStopFlag = true;
+                            closeTimerInterval(timerInterval);
+                            alert('승리!!', timeCount,'초걸림');
+                        }
+                    }
                 }
+
 
             });
             td.addEventListener('contextmenu', (event) => {
                 event.preventDefault();
+                if (!gameStartFlag){
+                    gameStartFlag = true;
+                    timerInterval = setTimerInterval();
+                }
                 let rowIndex = tableTrArray.findIndex(row => row.contains(event.target));
                 let columns = Array.from(tableTrArray[rowIndex].querySelectorAll('td'));
                 let columnIndex = columns.findIndex(column => column == event.target);
                 let column = columns[columnIndex];
 
-                console.log(rowIndex, columnIndex);
-
-                if (column.textContent ===''){
-                    column.textContent = 'A';
-                    tableStatusArray[rowIndex][columnIndex] = 'A';
-                }else if(column.textContent ==='A'){
-                    column.textContent = '?';
-                    tableStatusArray[rowIndex][columnIndex] = '?';
-                }else if(column.textContent === '?'){
-                    column.textContent = '';
-                    tableStatusArray[rowIndex][columnIndex] = '';
+                if(gameStopFlag === false){
+                    if (column.textContent ===''){
+                        column.textContent = 'A';
+                        tableStatusArray[rowIndex][columnIndex] = 'A';
+                    }else if(column.textContent ==='A'){
+                        column.textContent = '?';
+                        tableStatusArray[rowIndex][columnIndex] = '?';
+                    }else if(column.textContent === '?'){
+                        column.textContent = '';
+                        tableStatusArray[rowIndex][columnIndex] = '';
+                    }
                 }
 
             });
@@ -187,13 +216,14 @@ function createMineLocations(gameSettings){
     return mineArray;
 }
 function openTable(height, width) {
-    console.log('openTable',height,width);
     if(height>=0 && width>=0 && height<gameSettings.height && width<gameSettings.width) {
         let columns = Array.from(tableTrArray[height].querySelectorAll('td'));
         let column = columns[width];
         let status = tableArray[height][width];
         if (status === ' ') {
             if (tableStatusArray[height][width] === ''){
+                openCount++;
+                console.log('openTable',height,width, openCount);
                 column.textContent = '';
                 column.style.backgroundColor = '#DDDDDD';
                 tableStatusArray[height][width] = ' ';
@@ -207,24 +237,26 @@ function openTable(height, width) {
             return;
         } else {
             column.textContent = status;
-            if (status === '1') {
-                column.style.backgroundColor = '#DDDDDD';
-                column.style.color = 'blue';
-            } else if (status === '2') {
-                column.style.backgroundColor = '#DDDDDD';
-                column.style.color = 'green';
-            } else if (status === '3') {
-                column.style.backgroundColor = '#DDDDDD';
-                column.style.color = 'yellow';
-            } else if (status === '4') {
-                column.style.backgroundColor = '#DDDDDD';
-                column.style.color = 'red';
-            } else if (status === '5') {
-                column.style.backgroundColor = '#DDDDDD';
-                column.style.color = 'red';
-            } else if (status === '6') {
-                column.style.backgroundColor = '#DDDDDD';
-                column.style.color = 'red';
+            if (tableStatusArray[height][width] === '') {
+                if (status === '1') {
+                    column.style.backgroundColor = '#DDDDDD';
+                    column.style.color = 'blue';
+                } else if (status === '2') {
+                    column.style.backgroundColor = '#DDDDDD';
+                    column.style.color = 'green';
+                } else if (status === '3') {
+                    column.style.backgroundColor = '#DDDDDD';
+                    column.style.color = 'yellow';
+                } else if (status === '4') {
+                    column.style.backgroundColor = '#DDDDDD';
+                    column.style.color = 'red';
+                } else if (status === '5') {
+                    column.style.backgroundColor = '#DDDDDD';
+                    column.style.color = 'red';
+                } else if (status === '6') {
+                    column.style.backgroundColor = '#DDDDDD';
+                    column.style.color = 'red';
+                }
             }
         }
         tableStatusArray[height][width] = status;
